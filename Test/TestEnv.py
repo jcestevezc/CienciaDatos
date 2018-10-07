@@ -10,6 +10,12 @@ import requests
 import pandas as pd
 import psycopg2
 
+sql_digital_press = "INSERT INTO DS_DIGITAL_PRESS(TITLE,AUTHOR,DATE,MEDIO,TYPE_ARTICLE,KEY_WORDS) VALUES(%s)"
+connection  = psycopg2.connect(host="localhost",database="data_science", user="postgres", password="root")
+cursor = connection.cursor()
+#print('PostgreSQL database version:')
+cursor.execute('SELECT version()')
+print(type(cursor))
 
 r = requests.get("https://www.larepublica.co/economia/ministerio-de-comercio-presento-estrategia-estado-simple-colombia-agil-2777011")
 root = lxml.html.fromstring(r.content)
@@ -31,20 +37,14 @@ def laRepublica(root):
                 'medio':medio,
                 'type_article':type_article,
                 'key_words':key_words}
-    print('El tipo de dato es:  ')
-    print(type(dictionary))
+    
     register = pd.DataFrame(data = dictionary)
-    input()
+    #register.to_sql('DS_DIGITAL_PRESS', con = connection, if_exists='append')
+    cursor.executemany(sql_digital_press, register)
+
 
 laRepublica(root)
 
-connection  = psycopg2.connect(host="localhost",database="data_science", user="postgres", password="root")
-cursor = connection.cursor()
-print('PostgreSQL database version:')
-cursor.execute('SELECT version()')
-
-#sql = """INSERT INTO vendors(vendor_name) VALUES(%s) RETURNING vendor_id;"""
-#cursor.execute(sql, (value1,value2))
 connection.commit()
 cursor.close()
 connection.close()
