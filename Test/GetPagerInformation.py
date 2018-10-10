@@ -1,7 +1,7 @@
 '''
 Created on 4/10/2018
 
-@author: co1012351486
+@author: Juan Camilo Estevez
 '''
 
 import lxml.etree
@@ -42,8 +42,6 @@ def laRepublica(root,sql_digital_press):
                 'type_article':type_article,
                 'key_words':key_words}
     
-    print(dictionary)
-    input()
     register = clean(dictionary)
     sql_digital_press = sql_digital_press +"'"+ register.title.values[0] + "','"+str(register.author.values[0]) + "','"+ str(register.date.values[0]) + "','"+ str(register.medio.values[0]) + "','"+ str(register.type_article.values[0]) + "','"+ str(register.key_words.values[0]) + "','"+ str(register.content.values[0]) + "');"
     cursor.execute(sql_digital_press)
@@ -88,7 +86,7 @@ def clean(dictionary):
     return register
 
 
-#laRepublica(root,sql_digital_press)
+laRepublica(root,sql_digital_press)
 elColombiano(root2,sql_digital_press)
 
 cursor.execute('SELECT * FROM public."DS_DIGITAL_PRESS"')
@@ -96,12 +94,6 @@ rows = cursor.fetchall()
 for row in rows:
     print("Registro"+format(row))
 
-
-
 connection.commit()
 cursor.close()
 connection.close()
-
-
-#connection.autocommit = True
-#connection.closed
