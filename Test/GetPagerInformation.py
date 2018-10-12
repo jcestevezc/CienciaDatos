@@ -27,8 +27,8 @@ root2 = lxml.html.fromstring(r.content)
 
 def laRepublica(root,sql_digital_press):
     title = root.xpath("//meta[@property='og:title']/@content")
-    content = root.xpath("//div[contains(@class,'articleWrapper')]")
-    author = root.xpath("//div[@class='autorArticle']")
+    content = root.xpath("//div[contains(@class,'articleWrapper')]")[0].text_content()
+    author = root.xpath("//div[@class='autorArticle']")[0].text_content()
     date = root.xpath("//div[@class='columns medium-3 date']")
     medio = root.xpath("//meta[@name='author']/@content")
     type_article = root.xpath("//meta[@property='og:type']/@content") 
@@ -48,8 +48,8 @@ def laRepublica(root,sql_digital_press):
     
 def elColombiano(root,sql_digital_press):
     title = root.xpath("//meta[@property='og:title']/@content")
-    content = root.xpath("//div[@class='text']")
-    content = format(content[0].text.strip())
+    content = root.xpath("//div[@class='text']")[0].text_content()
+    #content = format(content[0].text.strip())
     author = root.xpath("//meta[@name='author']/@content")
     date = root.xpath("//div[@class='autor']//h6")
     date = format(date[0].text.strip())
@@ -77,7 +77,7 @@ def elColombiano(root,sql_digital_press):
 def clean(dictionary):
     register = pd.DataFrame(data = dictionary)
     register.title = str(register.title.values[0]).replace("[", "").replace("]", "").replace("  ", "")
-    register.content = str(register.content.values[0]).replace("[", "").replace("]", "").replace("  ", "")
+    register.content = str(register.content.values[0]).replace("[", "").replace("]", "").replace("  ", "").replace("\t", "").replace("\n", "").replace("\r", "")
     register.author = str(register.author.values[0]).replace("[", "").replace("]", "").replace("  ", "")
     register.date = str(register.date.values[0]).replace("[", "").replace("]", "").replace("  ", "").replace("\t", "").replace("\n", "").replace("\r", "")
     register.medio = str(register.medio.values[0]).replace("[", "").replace("]", "").replace("  ", "")
@@ -87,7 +87,7 @@ def clean(dictionary):
 
 
 laRepublica(root,sql_digital_press)
-elColombiano(root2,sql_digital_press)
+#elColombiano(root2,sql_digital_press)
 
 cursor.execute('SELECT * FROM public."DS_DIGITAL_PRESS"')
 rows = cursor.fetchall()
