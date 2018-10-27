@@ -8,6 +8,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import accuracy_score
+import pandas as pd
+from pandas import DataFrame
 import tweepy
 import re
 import unidecode
@@ -50,6 +52,7 @@ def downloadData():
     cursor = connection.cursor()
     sql_twitter = 'INSERT INTO "DS_TWITTER_DATA" (user_name, user_location, user_followers_count, user_friends_count, user_time_zone, user_following, geo, coordinates, place, full_text, retweet_count, favorite_count, language, created_at, id_tweet,clean_text) VALUES ('
 
+    ## Pendiente filtrar unicamente tweets sin retweets
     for tweet in tweepy.Cursor(api.search,q="@RevistaSemana",count=100,lang="es",since="2018-09-03", tweet_mode='extended').items():
         cleanText = clean(str(tweet.full_text))
         sql_twitter = sql_twitter +"'"+ str(tweet.user.name) + "','"+ str(tweet.user.location) + "','"+ str(tweet.user.followers_count) + "','"+ str(tweet.user.friends_count) + "','"+ str(tweet.user.time_zone) + "','"+ str(tweet.user.following) +"','"+ str(tweet.geo) + "','"+ str(tweet.coordinates) + "','" + str(tweet.place) + "','" + str(tweet.full_text) + "','"+ str(tweet.retweet_count) + "','"+ str(tweet.favorite_count) + "','"+ str(tweet.lang) + "','"+ str(tweet.created_at) + "','"+ str(tweet.id) + "','"+ cleanText +"');"
@@ -93,11 +96,26 @@ def getData():
     
     connection.commit()
     cursor.close()
-    connection.close()
+    
+def getTrainingData():
+    cursor = connection.cursor()
+    select = 'SELECT "Text" FROM "DS_TWITTER_TRAINING_DATA";'    
+    cursor.execute(select)
+    result = cursor.fetchall()
+    
+    for row in result:
+        print(row[0])
+    
+    #df = DataFrame(cursor.fetchall())
+    #df = pd.DataFrame(cursor.fetchall())
+    #df.columns = cursor.keys()
+    #print(df)
+    connection.commit()
+    cursor.close()    
     
 def main(): 
     downloadData()
-    getData()
+    getTrainingData()
     connection.close()
     
     
