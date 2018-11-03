@@ -99,23 +99,18 @@ def getData():
     
 def getTrainingData():
     cursor = connection.cursor()
-    select = 'SELECT "Text" FROM "DS_TWITTER_TRAINING_DATA";'    
+    select = 'SELECT "Text", "Sentiment" FROM "DS_TWITTER_TRAINING_DATA";'    
     cursor.execute(select)
-    result = cursor.fetchall()
-    
-    for row in result:
-        print(row[0])
-    
-    #df = DataFrame(cursor.fetchall())
-    #df = pd.DataFrame(cursor.fetchall())
-    #df.columns = cursor.keys()
-    #print(df)
+    data = DataFrame(cursor.fetchall())
+    data.columns = ['Text', 'Sentiment']
     connection.commit()
     cursor.close()    
+    return data
     
 def main(): 
-    downloadData()
-    getTrainingData()
+    #downloadData()
+    data = getTrainingData()
+    print(data)
     connection.close()
     
     
