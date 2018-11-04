@@ -4,12 +4,13 @@ Created on 26/10/2018
 @author: CO1012351486
 '''
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import accuracy_score
-import pandas as pd
 from pandas import DataFrame
+import pickle
 import tweepy
 import re
 import unidecode
@@ -37,8 +38,13 @@ api = tweepy.API(auth,wait_on_rate_limit=True)
 def clean(text):
     text = text.lower()
     text = unidecode.unidecode(text)
-    text = re.sub('[-!"#$%&()*+,./:;<=>?@\[\\\]_`{|}~]+', '', text)
-    #text = re.sub('[ ]+', '_', text)
+    text = re.sub('-|!|"|#|$|%|&|(|)|,|.|/|:|;|\+', '', 'casa: una,(dos),tres + *')
+    text = re.sub('_|`|{|}|~|<|=|>|\|[|]|@|\|', '', text)
+    text = re.sub('\n|\t|\r', '', text)
+    text = re.sub('  ', '', text)
+    # + *
+
+
     text.replace("\n", "")
     text.replace("  ", "")
     text.replace("\t", "")
@@ -71,7 +77,7 @@ def modeling(data,data_labels):
         stop_words = spanish_stopwords
         )
     nb = MultinomialNB()
-            
+      
     features = vectorizer.fit_transform(data)
     features_nd = features.toarray()
     X_train, X_test, y_train, y_test  = train_test_split(features_nd, data_labels, train_size=0.80, random_state=None)
@@ -106,13 +112,47 @@ def getTrainingData():
     connection.commit()
     cursor.close()    
     return data
+
+def applyModel(model, data):
+    spanish_stopwords = ['de', 'la', 'que', 'el', 'en', 'y', 'a', 'los', 'del', 'se', 'las', 'por', 'un', 'para', 'con', 'no', 'una', 'su', 'al', 'lo', 'como', 'más', 'pero', 'sus', 'le', 'ya', 'o', 'este', 'sí', 'porque', 'esta', 'entre', 'cuando', 'muy', 'sin', 'sobre', 'también', 'me', 'hasta', 'hay', 'donde', 'quien', 'desde', 'todo', 'nos', 'durante', 'todos', 'uno', 'les', 'ni', 'contra', 'otros', 'ese', 'eso', 'ante', 'ellos', 'e', 'esto', 'mí', 'antes', 'algunos', 'qué', 'unos', 'yo', 'otro', 'otras', 'otra', 'él', 'tanto', 'esa', 'estos', 'mucho', 'quienes', 'nada', 'muchos', 'cual', 'poco', 'ella', 'estar', 'estas', 'algunas', 'algo', 'nosotros', 'mi', 'mis', 'tú', 'te', 'ti', 'tu', 'tus', 'ellas', 'nosotras', 'vosostros', 'vosostras', 'os', 'mío', 'mía', 'míos', 'mías', 'tuyo', 'tuya', 'tuyos', 'tuyas', 'suyo', 'suya', 'suyos', 'suyas', 'nuestro', 'nuestra', 'nuestros', 'nuestras', 'vuestro', 'vuestra', 'vuestros', 'vuestras', 'esos', 'esas', 'estoy', 'estás', 'está', 'estamos', 'estáis', 'están', 'esté', 'estés', 'estemos', 'estéis', 'estén', 'estaré', 'estarás', 'estará', 'estaremos', 'estaréis', 'estarán', 'estaría', 'estarías', 'estaríamos', 'estaríais', 'estarían', 'estaba', 'estabas', 'estábamos', 'estabais', 'estaban', 'estuve', 'estuviste', 'estuvo', 'estuvimos', 'estuvisteis', 'estuvieron', 'estuviera', 'estuvieras', 'estuviéramos', 'estuvierais', 'estuvieran', 'estuviese', 'estuvieses', 'estuviésemos', 'estuvieseis', 'estuviesen', 'estando', 'estado', 'estada', 'estados', 'estadas', 'estad', 'he', 'has', 'ha', 'hemos', 'habéis', 'han', 'haya', 'hayas', 'hayamos', 'hayáis', 'hayan', 'habré', 'habrás', 'habrá', 'habremos', 'habréis', 'habrán', 'habría', 'habrías', 'habríamos', 'habríais', 'habrían', 'había', 'habías', 'habíamos', 'habíais', 'habían', 'hube', 'hubiste', 'hubo', 'hubimos', 'hubisteis', 'hubieron', 'hubiera', 'hubieras', 'hubiéramos', 'hubierais', 'hubieran', 'hubiese', 'hubieses', 'hubiésemos', 'hubieseis', 'hubiesen', 'habiendo', 'habido', 'habida', 'habidos', 'habidas', 'soy', 'eres', 'es', 'somos', 'sois', 'son', 'sea', 'seas', 'seamos', 'seáis', 'sean', 'seré', 'serás', 'será', 'seremos', 'seréis', 'serán', 'sería', 'serías', 'seríamos', 'seríais', 'serían', 'era', 'eras', 'éramos', 'erais', 'eran', 'fui', 'fuiste', 'fue', 'fuimos', 'fuisteis', 'fueron', 'fuera', 'fueras', 'fuéramos', 'fuerais', 'fueran', 'fuese', 'fueses', 'fuésemos', 'fueseis', 'fuesen', 'sintiendo', 'sentido', 'sentida', 'sentidos', 'sentidas', 'siente', 'sentid', 'tengo', 'tienes', 'tiene', 'tenemos', 'tenéis', 'tienen', 'tenga', 'tengas', 'tengamos', 'tengáis', 'tengan', 'tendré', 'tendrás', 'tendrá', 'tendremos', 'tendréis', 'tendrán', 'tendría', 'tendrías', 'tendríamos', 'tendríais', 'tendrían', 'tenía', 'tenías', 'teníamos', 'teníais', 'tenían', 'tuve', 'tuviste', 'tuvo', 'tuvimos', 'tuvisteis', 'tuvieron', 'tuviera', 'tuvieras', 'tuviéramos', 'tuvierais', 'tuvieran', 'tuviese', 'tuvieses', 'tuviésemos', 'tuvieseis', 'tuviesen', 'teniendo', 'tenido', 'tenida', 'tenidos', 'tenidas', 'tened']
+    vectorizer = CountVectorizer(
+        analyzer = 'word',
+        lowercase = True,
+        stop_words = spanish_stopwords
+        )
+    
+    X_new_counts = vectorizer.transform(data)
+    vectorizer.fit_transform(data)
+    tfidf_transformer = TfidfTransformer()
+    X_new_tfidf = tfidf_transformer.fit_transform(X_new_counts)
+    predicted = model.predict(X_new_tfidf)
+    
+    cursor = connection.cursor()
+    update = 'UPDATE public."DS_TWITTER_DATA" SET sentiment="'+ predicted +'" WHERE clean_text ='+ data +';'
+    print(update)
+    cursor.execute(update)
+    connection.commit()
+    cursor.close()
+    
+def saveModel(model):
+    filename = 'finalized_model.sav'
+    pickle.dump(model, open(filename, 'wb'))
+    
+def loadModel():
+    filename = 'finalized_model.sav'
+    loaded_model = pickle.load(open(filename, 'rb'))
+    return loaded_model
+    
     
 def main(): 
-    #downloadData()
-    data = getTrainingData()
-    print(data)
+    downloadData()
+    training_data = getTrainingData()
+    model = modeling(training_data.Text, training_data.Sentiment)
+    saveModel(model)
+    model = loadModel()
+    data = getData()
+    applyModel(model,data)
     connection.close()
-    
     
 main()
     #datos['Date'] = datos.Date.str.replace(r'[a-z]+', '')
