@@ -38,7 +38,7 @@ api = tweepy.API(auth,wait_on_rate_limit=True)
 def clean(text):
     text = text.lower()
     text = unidecode.unidecode(text)
-    text = re.sub('-|!|"|#|$|%|&|(|)|,|.|/|:|;|\+', '', 'casa: una,(dos),tres + *')
+    text = re.sub('-|!|"|#|$|%|&|(|)|,|.|/|:|;|\+', '', text)
     text = re.sub('_|`|{|}|~|<|=|>|\|[|]|@|\|', '', text)
     text = re.sub('\n|\t|\r', '', text)
     text = re.sub('  ', '', text)
@@ -49,19 +49,20 @@ def clean(text):
     text.replace("  ", "")
     text.replace("\t", "")
     text.replace("\r", "")
-    print('Texto con reemplazos')
-    print(text)
+    #print('Texto con reemplazos')
+    #print(text)
     return text
 
-def downloadData():
+def downloadData(keyWord):
     
     cursor = connection.cursor()
-    sql_twitter = 'INSERT INTO "DS_TWITTER_DATA" (user_name, user_location, user_followers_count, user_friends_count, user_time_zone, user_following, geo, coordinates, place, full_text, retweet_count, favorite_count, language, created_at, id_tweet,clean_text) VALUES ('
+    sql_twitter = 'INSERT INTO "DS_TWITTER_DATA" (user_name, user_location, user_followers_count, user_friends_count, user_time_zone, user_following, geo, coordinates, place, full_text, retweet_count, favorite_count, language, created_at, id_tweet,clean_text,searchKeyWord) VALUES ('
 
     ## Pendiente filtrar unicamente tweets sin retweets
-    for tweet in tweepy.Cursor(api.search,q="@RevistaSemana",count=100,lang="es",since="2018-09-03", tweet_mode='extended').items():
+    for tweet in tweepy.Cursor(api.search,q=keyWord,count=100,lang="es",since="2018-09-03", tweet_mode='extended').items():
         cleanText = clean(str(tweet.full_text))
-        sql_twitter = sql_twitter +"'"+ str(tweet.user.name) + "','"+ str(tweet.user.location) + "','"+ str(tweet.user.followers_count) + "','"+ str(tweet.user.friends_count) + "','"+ str(tweet.user.time_zone) + "','"+ str(tweet.user.following) +"','"+ str(tweet.geo) + "','"+ str(tweet.coordinates) + "','" + str(tweet.place) + "','" + str(tweet.full_text) + "','"+ str(tweet.retweet_count) + "','"+ str(tweet.favorite_count) + "','"+ str(tweet.lang) + "','"+ str(tweet.created_at) + "','"+ str(tweet.id) + "','"+ cleanText +"');"
+        sql_twitter = sql_twitter +"'"+ str(tweet.user.name) + "','"+ str(tweet.user.location) + "','"+ str(tweet.user.followers_count) + "','"+ str(tweet.user.friends_count) + "','"+ str(tweet.user.time_zone) + "','"+ str(tweet.user.following) +"','"+ str(tweet.geo) + "','"+ str(tweet.coordinates) + "','" + str(tweet.place) + "','" + str(tweet.full_text) + "','"+ str(tweet.retweet_count) + "','"+ str(tweet.favorite_count) + "','"+ str(tweet.lang) + "','"+ str(tweet.created_at) + "','"+ str(tweet.id) + "','"+ cleanText + "','"+ keyWord +"');"
+        #print(sql_twitter)
         cursor.execute(sql_twitter)
         break
     
@@ -145,7 +146,8 @@ def loadModel():
     
     
 def main(): 
-    downloadData()
+    keyWord = "@RevistaSemana"
+    downloadData(keyWord)
     training_data = getTrainingData()
     model = modeling(training_data.Text, training_data.Sentiment)
     saveModel(model)
